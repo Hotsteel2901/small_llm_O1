@@ -1,3 +1,33 @@
+---
+language:
+  - zh
+license: mit
+library_name: pytorch
+tags:
+  - text-generation
+  - conversational
+  - chinese
+  - gpt
+  - from-scratch
+  - tiny-llm
+pipeline_tag: text-generation
+model-index:
+  - name: TinyGPT-zh-15M
+    results:
+      - task:
+          type: text-generation
+        dataset:
+          name: self-built Chinese dialogue corpus
+          type: custom
+        metrics:
+          - name: Validation Loss
+            type: loss
+            value: 0.1128
+          - name: Validation Perplexity
+            type: perplexity
+            value: 1.12
+---
+
 # TinyGPT — 从零训练的中文对话模型
 
 一个用 PyTorch 从零实现、从零训练的中文对话语言模型。没有使用任何预训练权重——所有参数都是在这台机器的 CPU 上，从随机初始化开始训练出来的。
