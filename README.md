@@ -169,6 +169,27 @@ tiny-gpt/
 1. **多轮语料中 85% 以「你好」开头**，导致模型学到「见到你好就回你好」的捷径 → 把开场白扩到 12 种（v5）
 2. **模型规模与数据量不匹配**：37M 参数配 27 万 token 时 loss 震荡不收敛 → 降到 15M 参数配 84 万 token，训练立刻变平滑
 
+### 推送模型到 HuggingFace 的镜像坑
+
+模型文件（15M 权重、语料、训练脚本等 22 个文件）已通过 git LFS 成功推到 `hotsteel09/small_llm_O1`，但在更新 **README 模型卡元数据** 时踩到一个镜像站陷阱，记录如下：
+
+`hf-mirror.com` 提供的 `/api/models/<repo>/commit/<branch>` 写入接口是**只读转发 + 伪造提交**：调用会返回
+
+```json
+{"success": true, "commitOid": "48a21bc...", "commitUrl": "https://huggingface.co/..."}
+```
+
+看起来完全正常，但**内容从未真正写入对象库**——生成的 commit 内容与父提交字节级相同（README 始终是 7116 字节的旧版本，`usedStorage` 也一直不变）。用 `cf-cache-status: MISS` 强制回源后，`etag` 与旧版本完全一致，可以确认不是缓存问题。
+
+同时，git push 到 `refs/heads/main` 会被无条件拒绝（`incorrect old value provided` / `stale info`，`--force`、`--force-with-lease`、fast-forward 全部无效），但**推送到新分支完全正常**——已实测把带 YAML 的 README（7683 字节）推到 `test-branch` 并成功从远端读回。
+
+**结论**：镜像站可以正常承载仓库内容的分发（clone/pull/文件下载），但**不能可靠地更新已存在的分支**。
+
+**规避方式**：
+- 内容分发走镜像，配置更新走官方域名或 [hf.co](https://huggingface.co) 网页端直接编辑模型卡
+- 若只能走镜像，把自己需要的内容推到**新分支**，再在网页端调整默认分支
+- 判断写入是否真的成功，不能只看 API 返回的 `success`，要回读比对 `raw/<revision>/README.md` 的**字节数与 etag**
+
 ## 能力边界
 
 这是一个 15M 参数的小模型，请合理预期：
