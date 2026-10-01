@@ -1,0 +1,17 @@
+# TinyGPT 依赖
+# 安装: pip install -r requirements.txt
+#
+# 说明:
+#   - 本项目从零实现 Transformer, 未使用 transformers 库的模型代码
+#   - 训练/推理可只用 CPU (本项目即在纯 CPU 上完成训练)
+#   - 如需 CUDA 版 PyTorch, 请按官方指引安装对应版本
+
+torch>=2.0.0        # 核心: 张量计算与自动求导
+tokenizers>=0.15.0  # BPE 分词器训练与加载
+numpy>=1.24.0       # 数值计算 (PyTorch 依赖, 脚本中也会直接用到)
+
+# 可选依赖: 仅 plot.py 绘制训练曲线时需要
+matplotlib>=3.6.0   # 训练曲线绘图 (中文标签需系统安装中文字体)
+
+# 可选依赖: 仅用于把模型推送到 HuggingFace Hub
+huggingface_hub>=0.23.0
