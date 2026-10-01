@@ -183,12 +183,33 @@ tiny-gpt/
 
 同时，git push 到 `refs/heads/main` 会被无条件拒绝（`incorrect old value provided` / `stale info`，`--force`、`--force-with-lease`、fast-forward 全部无效），但**推送到新分支完全正常**——已实测把带 YAML 的 README（7683 字节）推到 `test-branch` 并成功从远端读回。
 
-**结论**：镜像站可以正常承载仓库内容的分发（clone/pull/文件下载），但**不能可靠地更新已存在的分支**。
+**结论**：镜像站可以正常承载仓库内容的分发（clone/pull/文件下载），但**不能用 git push 或手搓 curl 来更新已存在的分支**。
 
-**规避方式**：
-- 内容分发走镜像，配置更新走官方域名或 [hf.co](https://huggingface.co) 网页端直接编辑模型卡
-- 若只能走镜像，把自己需要的内容推到**新分支**，再在网页端调整默认分支
-- 判断写入是否真的成功，不能只看 API 返回的 `success`，要回读比对 `raw/<revision>/README.md` 的**字节数与 etag**
+**正确的写入方式是官方 `huggingface_hub` 库**（本项目环境已预装 1.4.0）。它内部走的 REST 端点带正确的 `parent_commit` 与编码方式，实测可以真实写入：
+
+```python
+import os
+from huggingface_hub import HfApi, CommitOperationAdd
+
+os.environ["HF_ENDPOINT"] = "https://hf-mirror.com"
+api = HfApi(endpoint="https://hf-mirror.com", token="hf_xxx")
+
+info = api.create_commit(
+    repo_id="hotsteel09/small_llm_O1",
+    repo_type="model",
+    revision="main",
+    parent_commit="<当前 main 的 sha>",       # 关键参数
+    operations=[
+        CommitOperationAdd(path_in_repo="README.md",
+                           path_or_fileobj="README.md"),
+    ],
+    commit_message="docs: ...",
+)
+```
+
+`create_branch()` / `delete_branch()` 同样可用（用来管理临时分支）。
+
+**判断写入是否真的成功**：不能只看返回的 `success`，必须回读比对 `raw/<revision>/README.md` 的**字节数与 etag**，并确认 API 返回的 `pipeline_tag` / `tags` 字段真的变了。
 
 ## 能力边界
 
