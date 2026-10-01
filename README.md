@@ -69,6 +69,9 @@ AI  > 可以这样一步步来：每天固定时间上床；睡前一小时别�
 ## 快速开始
 
 ```bash
+# 安装依赖
+pip install -r requirements.txt
+
 # 看一批预设问题的回答
 python3 demo.py
 
@@ -82,7 +85,7 @@ python3 chat.py --prompt "为什么会下雨"
 python3 evaluate.py
 ```
 
-只依赖 `torch` 和 `tokenizers`，环境已就绪。
+核心只依赖 `torch` 和 `tokenizers`（见 `requirements.txt`），纯 CPU 即可运行。
 
 ## 目录结构
 
